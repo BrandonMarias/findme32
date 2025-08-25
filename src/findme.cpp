@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <Preferences.h>
 
 // --- Definición de Pines ---
 #define RELEVADOR_PIN 9
@@ -9,7 +8,6 @@
 #define BAUD_RATE 115200
 
 HardwareSerial &gsmSerial = Serial1; // Usamos Serial1 para comunicación con el módulo GSM/GPS
-Preferences preferences;
 
 const String numerosAutorizados[] = {
     "+527774656145",
@@ -270,18 +268,12 @@ void revisarYProcesarSMS()
       {
         Serial.println(">> COMANDO: Encendiendo relevador...");
         digitalWrite(RELEVADOR_PIN, HIGH);
-        preferences.begin("relay-state", false);
-        preferences.putBool("on", true);
-        preferences.end();
         enviarSMS(numeroRemitente, "Apagado");
       }
       else if (cuerpoMensaje.equalsIgnoreCase("Prender") || cuerpoMensaje.equalsIgnoreCase("Prender "))
       {
         Serial.println(">> COMANDO: Apagando relevador...");
         digitalWrite(RELEVADOR_PIN, LOW);
-        preferences.begin("relay-state", false);
-        preferences.putBool("on", false);
-        preferences.end();
         enviarSMS(numeroRemitente, "Encendido");
       }
       else if (cuerpoMensaje.equalsIgnoreCase("Localizar"))
@@ -316,14 +308,8 @@ void setup()
   delay(1000);
 
   pinMode(RELEVADOR_PIN, OUTPUT);
-  
-  preferences.begin("relay-state", false);
-  bool relayState = preferences.getBool("on", false);
-  digitalWrite(RELEVADOR_PIN, relayState);
-  preferences.end();
-
-  Serial.print("Relevador configurado. Estado restaurado a: ");
-  Serial.println(relayState ? "Encendido" : "Apagado");
+  digitalWrite(RELEVADOR_PIN, LOW);
+  Serial.println("Relevador configurado y apagado por defecto.");
 
   pinMode(PWR_PIN, OUTPUT);
   Serial.println("Encendiendo el módulo A7670SA...");
