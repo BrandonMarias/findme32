@@ -235,13 +235,23 @@ bool inicializarHTTP() {
   
   // Configurar SSL para aceptar cualquier certificado (necesario para algunos servidores)
   Serial.println(">> Configurando validación SSL...");
-  gsmSerial.println("AT+CSSLCFG=\"sslversion\",0,4"); // TLS 1.2
+  
+  // Forzar TLS 1.2 (Valor 3)
+  gsmSerial.println("AT+CSSLCFG=\"sslversion\",0,3"); // 3 = TLS 1.2
   delay(500);
   esperarRespuesta();
   
   gsmSerial.println("AT+CSSLCFG=\"authmode\",0,0"); // No verificar certificado del servidor
   delay(500);
   esperarRespuesta();
+  
+  // --- ¡NUEVO COMANDO AÑADIDO! ---
+  // Habilitar SNI (Server Name Indication) para el contexto 0
+  Serial.println(">> Habilitando SNI (Server Name Indication)...");
+  gsmSerial.println("AT+CSSLCFG=\"enableSNI\",0,1"); // 1 = Habilitar SNI 
+  delay(500);
+  esperarRespuesta();
+  // --- FIN DEL NUEVO COMANDO ---
   
   return true;
 }
@@ -557,6 +567,8 @@ void setup() {
   String csq = esperarRespuesta();
   Serial.println(">> Calidad de señal: " + csq);
   
+  // --- INICIO DE LA LÓGICA DEL RELOJ MEJORADA ---
+  
   // Verificar fecha/hora del módulo (importante para SSL/TLS)
   Serial.println(">> Verificando fecha/hora del módulo...");
   gsmSerial.println("AT+CCLK?");
@@ -565,26 +577,7 @@ void setup() {
   Serial.println(">> Fecha/Hora: " + reloj);
   
   // Si la fecha es inválida, intentar sincronizar con la red
-  // Fecha válida debe ser 2025 = "25/... en adelante
-  // Detectar fechas inválidas: año < 2020 (menos de "20/)
-  bool fechaInvalida = false;
-  if (reloj.indexOf("ERROR") != -1) {
-    fechaInvalida = true;
-  } else if (reloj.indexOf("+CCLK: \"") != -1) {
-    // Extraer los primeros 2 dígitos del año (formato: "YY/MM/DD...)
-    int pos = reloj.indexOf("+CCLK: \"");
-    if (pos != -1 && pos + 9 < reloj.length()) {
-      String anio = reloj.substring(pos + 8, pos + 10);
-      int anioNum = anio.toInt();
-      // Año debe ser >= 20 (2020 o superior)
-      if (anioNum < 20) {
-        fechaInvalida = true;
-        Serial.println(">> Año detectado: 20" + anio + " (inválido, debe ser >= 2020)");
-      }
-    }
-  }
-  
-  if (fechaInvalida) {
+  if (reloj.indexOf("ERROR") != -1 || reloj.indexOf("70/") != -1 || reloj.indexOf("80/") != -1 || reloj.indexOf("00/") != -1) {
     Serial.println(">> Sincronizando fecha/hora con la red (requiere reinicio)...");
     gsmSerial.println("AT+CTZU=1"); // Auto-actualizar zona horaria
     delay(500);
@@ -600,7 +593,7 @@ void setup() {
     delay(1000);
     esperarRespuesta();
     
-    // Usar AT+CFUN=1,1 para un reinicio completo (más profundo que AT+CRESET)
+    // <<< CAMBIO CLAVE AQUÍ: Usar AT+CFUN=1,1 en lugar de AT+CRESET >>>
     gsmSerial.println("AT+CFUN=1,1"); 
     
     Serial.println(">> Módulo reiniciando. Esperando 25 segundos...");
@@ -631,30 +624,13 @@ void setup() {
     reloj = esperarRespuesta();
     Serial.println(">> Nueva Fecha/Hora (Post-Reinicio): " + reloj);
     
-    // Verificar si sigue siendo inválida
-    fechaInvalida = false;
-    if (reloj.indexOf("ERROR") != -1) {
-      fechaInvalida = true;
-    } else if (reloj.indexOf("+CCLK: \"") != -1) {
-      int pos = reloj.indexOf("+CCLK: \"");
-      if (pos != -1 && pos + 9 < reloj.length()) {
-        String anio = reloj.substring(pos + 8, pos + 10);
-        int anioNum = anio.toInt();
-        if (anioNum < 20) {
-          fechaInvalida = true;
-          Serial.println(">> Año post-reinicio: 20" + anio + " (aún inválido)");
-        } else {
-          Serial.println(">> Año post-reinicio: 20" + anio + " (válido)");
-        }
-      }
-    }
-    
-    if (fechaInvalida) {
+    if (reloj.indexOf("ERROR") != -1 || reloj.indexOf("70/") != -1 || reloj.indexOf("80/") != -1 || reloj.indexOf("00/") != -1) {
       Serial.println(">> ✗ ADVERTENCIA: El reloj sigue incorrecto. SSL fallará.");
     } else {
       Serial.println(">> ✓ Reloj sincronizado correctamente.");
     }
   }
+  // --- FIN DE LA LÓGICA DEL RELOJ MEJORADA ---
   
   // Inicializar GPS
   inicializarGPS();

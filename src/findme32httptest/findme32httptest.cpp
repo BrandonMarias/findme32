@@ -195,10 +195,16 @@ bool FindMe32HttpTest::runTest() {
   waitResponse(1000);
 
   // SSL config: TLS1.2 y no validar certificado (para túneles/entornos locales)
-  gsm.println("AT+CSSLCFG=\"sslversion\",0,4");
+  gsm.println("AT+CSSLCFG=\"sslversion\",0,3"); // 3 = TLS 1.2
   delay(300);
   waitResponse(500);
   gsm.println("AT+CSSLCFG=\"authmode\",0,0");
+  delay(300);
+  waitResponse(500);
+  
+  // Habilitar SNI (Server Name Indication)
+  Serial.println(">> [HTTPTEST] Habilitando SNI...");
+  gsm.println("AT+CSSLCFG=\"enableSNI\",0,1"); // 1 = Habilitar SNI
   delay(300);
   waitResponse(500);
 
