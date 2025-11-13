@@ -20,29 +20,34 @@ En `src/findme32/findme32.cpp`, cambiar:
 #define DEVICE_TOKEN "TU_TOKEN_UNICO_AQUI"  // ⚠️ Cambiar en cada dispositivo
 ```
 
-**Ejemplo de tokens únicos:**
-- Dispositivo 1: `"ESP32_TRACKER_001"`
-- Dispositivo 2: `"ESP32_TRACKER_002"`
-- Dispositivo 3: `"ESP32_TRACKER_003"`
+**Token actual configurado:**
+```cpp
+#define DEVICE_TOKEN "dt_80ced305b98eaf5d73b39281db9a39529ad6523d46a839e3873c2d69fc896f43"
+```
+
+**Para múltiples dispositivos, usar tokens diferentes:**
+- Dispositivo 1: `"dt_80ced305b98eaf5d73b39281db9a39529ad6523d46a839e3873c2d69fc896f43"`
+- Dispositivo 2: `"dt_otro_token_unico_para_dispositivo_2"`
+- Dispositivo 3: `"dt_otro_token_unico_para_dispositivo_3"`
 
 ### 2. Configurar el Endpoint del Backend
 
 ```cpp
-#define API_ENDPOINT "mibackend.com"        // Tu dominio
-#define API_PATH "/gpstracker"              // Ruta del endpoint
-#define API_PORT "80"                       // 80 para HTTP, 443 para HTTPS
+#define API_ENDPOINT "tunel.ponlecoco.com"     // Tu dominio
+#define API_PATH "/api/gps/gpstracker"         // Ruta del endpoint
+#define API_PORT "443"                          // 443 para HTTPS
 ```
 
 ### 3. Configurar el APN de tu Operador
 
-En la función `verificarConexionGPRS()`, línea 227:
+El código está configurado para **Telcel** con el APN:
 
 ```cpp
-gsmSerial.println("AT+CSTT=\"internet.com\",\"\",\"\"");  // Cambiar según operador
+gsmSerial.println("AT+CGDCONT=1,\"IP\",\"internet.itelcel.com\"");
 ```
 
-**APNs comunes en México:**
-- Telcel: `"internet.itelcel.com"`
+**Otros APNs comunes en México:**
+- Telcel: `"internet.itelcel.com"` ✅ (Configurado)
 - Movistar: `"internet.movistar.com.mx"`
 - AT&T: `"internet.att.com.mx"`
 - Unefon: `"internet.unefon.com.mx"`
@@ -51,22 +56,22 @@ gsmSerial.println("AT+CSTT=\"internet.com\",\"\",\"\"");  // Cambiar según oper
 
 ### GPS/GNSS
 - `AT+CGNSPWR=1` - Encender GPS
-- `AT+CGNSSEQ="RMC"` - Configurar secuencia NMEA
-- `AT+CGNSINF` - Obtener información de ubicación
+- `AT+CGNSINF` - Obtener información de ubicación (coordenadas, fix status, etc.)
 
-### HTTP
+### HTTPS/HTTP
 - `AT+HTTPINIT` - Inicializar servicio HTTP
 - `AT+HTTPTERM` - Terminar sesión HTTP
-- `AT+HTTPPARA="URL","..."` - Configurar URL
-- `AT+HTTPPARA="USERDATA","x-device-token: ..."` - Agregar header personalizado
+- `AT+HTTPPARA="CID",1` - Configurar contexto PDP
+- `AT+HTTPPARA="URL","..."` - Configurar URL completa con query params
+- `AT+HTTPSSL=1` - Habilitar SSL/TLS para HTTPS
 - `AT+HTTPACTION=0` - Ejecutar petición GET (0=GET, 1=POST, 2=HEAD)
 - `AT+HTTPREAD` - Leer respuesta del servidor
 
-### GPRS
-- `AT+CGATT?` - Verificar conexión GPRS
-- `AT+CSTT="APN","user","pass"` - Configurar APN
-- `AT+CIICR` - Activar conexión de datos
-- `AT+CIFSR` - Obtener dirección IP
+### GPRS (SIM7600)
+- `AT+CREG?` - Verificar registro en la red
+- `AT+CGDCONT=1,"IP","internet.itelcel.com"` - Configurar APN Telcel
+- `AT+CGACT=1,1` - Activar contexto PDP
+- `AT+CGPADDR=1` - Obtener dirección IP asignada
 
 ## 🚀 Compilación y Carga
 
@@ -100,8 +105,8 @@ El sistema imprime logs detallados por el puerto serial (115200 baud):
 >> =============================
 >> GPS Tracker - FindMe32
 >> =============================
->> Device Token: ESP32_TRACKER_001
->> API Endpoint: mibackend.com/gpstracker
+>> Device Token: dt_80ced305b98eaf5d73b39281db9a39529ad6523d46a839e3873c2d69fc896f43
+>> API Endpoint: tunel.ponlecoco.com/api/gps/gpstracker
 >> Intervalo: 5 minutos
 >> =============================
 
@@ -109,8 +114,10 @@ El sistema imprime logs detallados por el puerto serial (115200 baud):
 >> Módulo GSM respondiendo
 >> Inicializando GPS...
 >> Verificando conexión GPRS...
->> GPRS conectado
->> IP obtenida: 10.xxx.xxx.xxx
+>> Configurando APN Telcel...
+>> Activando contexto PDP...
+>> Dirección IP: +CGPADDR: 1,"10.xxx.xxx.xxx"
+>> ✓ GPRS conectado y listo
 
 >> Sistema listo. Comenzando ciclo de envío...
 
@@ -118,11 +125,20 @@ El sistema imprime logs detallados por el puerto serial (115200 baud):
 >> Tiempo transcurrido: 300 segundos
 >> Obteniendo coordenadas GPS...
 >> Intento 1 de 5
->> Coordenadas obtenidas: 19.432608, -99.133209
+>> Respuesta GPS: +CGNSINF: 1,1,20251112120000.000,19.432608,-99.133209,525.4,...
+>> GNSS Run: 1, Fix: 1
+>> Lat: '19.432608', Lon: '-99.133209'
+>> ✓ Coordenadas obtenidas: 19.432608, -99.133209
 >> Enviando ubicación al servidor...
->> Inicializando HTTP...
+>> Inicializando HTTPS...
+>> Habilitando SSL/TLS...
+>> URL: https://tunel.ponlecoco.com/api/gps/gpstracker?lat=19.432608&lon=-99.133209&token=dt_80ced...
 >> Ejecutando petición HTTP GET...
++HTTPACTION: 0,200,47
 >> ✓ Ubicación enviada exitosamente (200 OK)
+>> Respuesta del servidor:
++HTTPREAD: 47
+{"success":true,"message":"Location received"}
 >> ✓ Ciclo completado exitosamente
 >> ============================
 ```
@@ -139,11 +155,13 @@ Ver archivo `BACKEND_NESTJS_CONFIG.md` para:
 
 ### Endpoint esperado:
 
-**GET** `http://mibackend.com/gpstracker?lat=19.432608&lon=-99.133209`
+**GET** `https://tunel.ponlecoco.com/api/gps/gpstracker?lat=19.432608&lon=-99.133209&token=dt_80ced305b98eaf5d73b39281db9a39529ad6523d46a839e3873c2d69fc896f43`
 
-**Headers:**
+**Query Parameters:**
 ```
-x-device-token: ESP32_TRACKER_001
+lat: Latitud en grados decimales
+lon: Longitud en grados decimales
+token: Token único del dispositivo
 ```
 
 **Respuesta esperada:**
@@ -165,9 +183,11 @@ x-device-token: ESP32_TRACKER_001
 
 1. **Token único por dispositivo**: Cada ESP32 debe tener un token diferente
 2. **Validación en backend**: Implementar whitelist de tokens válidos
-3. **HTTPS en producción**: Cambiar `API_PORT` a `"443"` y URL a `https://`
-4. **Rate limiting**: Limitar peticiones por dispositivo
-5. **Logs de auditoría**: Registrar todas las peticiones
+3. **HTTPS habilitado**: ✅ Usando SSL/TLS con `AT+HTTPSSL=1`
+4. **Conexión segura**: ✅ Puerto 443 configurado
+5. **Rate limiting**: Limitar peticiones por dispositivo en el backend
+6. **Logs de auditoría**: Registrar todas las peticiones con timestamp
+7. **Token seguro**: Usar tokens largos y aleatorios (como el configurado)
 
 ## 🛠️ Solución de Problemas
 

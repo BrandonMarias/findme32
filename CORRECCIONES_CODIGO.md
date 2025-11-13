@@ -151,7 +151,7 @@ async receiveGpsDataGet(
 
 **URL de ejemplo:**
 ```
-GET http://mibackend.com/gpstracker?lat=19.432608&lon=-99.133209&token=ESP32_TRACKER_001
+GET http://mibackend.com/gpstracker?lat=19.432608&lon=-99.133209&token=ESP32_TRACKER_001JWT
 ```
 
 ---
