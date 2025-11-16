@@ -24,7 +24,7 @@
 // ============================
 // LÓGICA DE MOVIMIENTO
 // ============================
-#define UMBRAL_MOVIMIENTO_METROS 10.0
+#define UMBRAL_MOVIMIENTO_METROS 25.0
 #define INTERVALO_LECTURA_GPS (30 * 1000)   // 30 segundos
 #define INTERVALO_HEARTBEAT (5 * 60 * 1000) // 5 minutos
 
