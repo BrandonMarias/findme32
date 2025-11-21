@@ -117,8 +117,10 @@ GpsData GPSModule::obtenerCoordenadas(int maxIntentos) {
       return data;
     }
     
-    Serial.println(">> No se obtuvo ubicación válida. Reintentando...");
-    delay(GPS_DELAY_INTENTO);
+    if (intento < maxIntentos) {
+      Serial.println(">> No se obtuvo ubicación válida. Reintentando...");
+      delay(GPS_DELAY_INTENTO);
+    }
   }
   
   Serial.println(">> No se pudo obtener ubicación GPS en esta lectura.");

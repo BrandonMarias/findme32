@@ -18,6 +18,9 @@ unsigned long ultimoCheckGPS = 0;
 unsigned long ultimoEnvioServidor = 0;
 unsigned long tiempoUltimaLectura = 0;
 
+int fallosGPSConsecutivos = 0;
+const int MAX_FALLOS_GPS = 3;
+
 bool posicionActualValida = false;
 double lat_actual_leida = 0.0;
 double lon_actual_leida = 0.0;
@@ -107,9 +110,10 @@ void loop() {
       return;
     }
 
-    GpsData pos = gps.obtenerCoordenadas();
+    GpsData pos = gps.obtenerCoordenadas(3);
     
     if (pos.valida) {
+      fallosGPSConsecutivos = 0; // Resetear contador de fallos
       unsigned long tiempoActualLectura = millis();
       lat_actual_leida = pos.lat;
       lon_actual_leida = pos.lon;
@@ -144,6 +148,23 @@ void loop() {
       }
     } else {
       Serial.println(">> No se obtuvo fix de GPS en este ciclo.");
+      fallosGPSConsecutivos++;
+      
+      if (fallosGPSConsecutivos >= MAX_FALLOS_GPS) {
+        Serial.println(">> ❗ " + String(MAX_FALLOS_GPS) + " fallos consecutivos de GPS. Reiniciando módulo GPS...");
+        
+        // Apagar GPS
+        gsm.getSerial().println("AT+CGNSSPWR=0");
+        delay(2000);
+        
+        // Reiniciar GPS
+        if (gps.inicializar()) {
+          Serial.println(">> ✓ Módulo GPS reiniciado correctamente");
+          fallosGPSConsecutivos = 0;
+        } else {
+          Serial.println(">> ✗ Error al reiniciar módulo GPS");
+        }
+      }
     }
   } // Fin del chequeo de 30 segundos
 

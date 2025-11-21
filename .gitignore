@@ -3,3 +3,6 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# Archivos de configuración con credenciales sensibles
+src/findme32/config.h
