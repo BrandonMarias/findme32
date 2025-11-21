@@ -7,3 +7,10 @@
 # Archivos de configuración con credenciales sensibles
 src/findme32/config.h
 src/findme/findme_config.h
+
+BACKEND_NESTJS_CONFIG.md
+CONFIGURACION_ACTUALIZADA.md
+CORRECCIONES_CODIGO.md
+MODULAR_ARCHITECTURE.md
+README_GPS_TRACKER.md
+ELIMINAR_ARCHIVOS_SENSIBLES.md
