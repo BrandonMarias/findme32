@@ -6,3 +6,4 @@
 
 # Archivos de configuración con credenciales sensibles
 src/findme32/config.h
+src/findme/findme_config.h

@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "findme_config.h"
 
 // --- Definición de Pines ---
 #define RELEVADOR_PIN 9
@@ -8,16 +9,6 @@
 #define BAUD_RATE 115200
 
 HardwareSerial &gsmSerial = Serial1; // Usamos Serial1 para comunicación con el módulo GSM/GPS
-
-const String numerosAutorizados[] = {
-    "+527774656145",
-    "+527771357591",
-    "+527771093218",
-    "+527772236960",
-    "+527771480029",
-    "+527771857437",
-    "+527773848165"};
-const int totalNumeros = sizeof(numerosAutorizados) / sizeof(numerosAutorizados[0]);
 
 bool esNumeroAutorizado(const String &numero)
 {
