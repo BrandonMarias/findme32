@@ -104,11 +104,6 @@ void loop() {
   // --- 1. LÓGICA DE LECTURA DE GPS (Cada 30 segundos) ---
   if (tiempoActual - ultimoCheckGPS >= INTERVALO_LECTURA_GPS) {
     ultimoCheckGPS = tiempoActual;
-    
-    if (!gsm.verificarConexionGPRS()) {
-      Serial.println(">> Error: Sin conexión GPRS. Reintentando en 30s...");
-      return;
-    }
 
     GpsData pos = gps.obtenerCoordenadas(3);
     
@@ -151,18 +146,19 @@ void loop() {
       fallosGPSConsecutivos++;
       
       if (fallosGPSConsecutivos >= MAX_FALLOS_GPS) {
-        Serial.println(">> ❗ " + String(MAX_FALLOS_GPS) + " fallos consecutivos de GPS. Reiniciando módulo GPS...");
+        Serial.println(">> ❗ " + String(MAX_FALLOS_GPS) + " fallos consecutivos de GPS. Reiniciando GPS...");
         
-        // Apagar GPS
-        gsm.getSerial().println("AT+CGNSSPWR=0");
-        delay(2000);
-        
-        // Reiniciar GPS
+        // Reinicializar GPS
         if (gps.inicializar()) {
-          Serial.println(">> ✓ Módulo GPS reiniciado correctamente");
+          Serial.println(">> ✓ GPS reiniciado correctamente");
           fallosGPSConsecutivos = 0;
+          
+          // Dar tiempo al GPS para buscar satélites (mínimo 30 segundos)
+          Serial.println(">> Esperando 30 segundos para que el GPS busque satélites...");
+          delay(30000);
+          Serial.println(">> GPS listo para obtener coordenadas");
         } else {
-          Serial.println(">> ✗ Error al reiniciar módulo GPS");
+          Serial.println(">> ✗ Error al reiniciar GPS");
         }
       }
     }

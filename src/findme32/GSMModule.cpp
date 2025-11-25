@@ -215,3 +215,28 @@ bool GSMModule::verificarConexionGPRS() {
   Serial.println(">> ✓ GPRS conectado y listo");
   return true;
 }
+
+void GSMModule::reiniciarModulo() {
+  Serial.println(">> Reiniciando módulo A7670SA completamente...");
+  
+  // Apagar módulo con pulso en PWR_PIN
+  digitalWrite(pwrPin, HIGH);
+  delay(3000);  // Mantener presionado 3 segundos para apagado
+  digitalWrite(pwrPin, LOW);
+  
+  Serial.println(">> Módulo apagado. Esperando 5 segundos...");
+  delay(5000);
+  
+  // Encender módulo nuevamente
+  encenderModulo();
+  
+  Serial.println(">> Esperando que el módulo se inicialice...");
+  delay(10000);
+  
+  // Verificar comunicación
+  if (verificarComunicacion()) {
+    Serial.println(">> ✓ Módulo reiniciado correctamente");
+  } else {
+    Serial.println(">> ✗ Advertencia: Módulo no responde después del reinicio");
+  }
+}

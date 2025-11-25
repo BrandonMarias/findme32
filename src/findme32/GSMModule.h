@@ -25,6 +25,7 @@ public:
   // Utilidades
   String esperarRespuesta(unsigned long timeout_ms = 5000);
   void verificarCalidadSenal();
+  void reiniciarModulo();
   
   HardwareSerial& getSerial() { return gsm; }
 
